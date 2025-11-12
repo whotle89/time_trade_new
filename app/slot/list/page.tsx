@@ -9,6 +9,7 @@ export default function SlotListPage() {
   const [mySlots, setMySlots] = useState<any[]>([]);
   const [publicSlots, setPublicSlots] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [requestedSlots, setRequestedSlots] = useState<string[]>([]);
 
   useEffect(() => {
     const fetchSlots = async () => {
@@ -42,12 +43,48 @@ export default function SlotListPage() {
 
       if (publicError) console.error('❌ 공개 슬롯 조회 실패:', publicError.message);
       else setPublicSlots(publicData || []);
+      
+      // ✅ 내가 이미 신청한 슬롯 ID 리스트 가져오기
+    const { data: requested } = await supabase
+        .from('time_request')
+        .select('slot_id')
+        .eq('requester_id', user.id);
+
+    setRequestedSlots(requested?.map((r) => r.slot_id) || []);
 
       setLoading(false);
     };
 
     fetchSlots();
   }, [router]);
+
+    // ✅ 신청 처리 함수
+    const handleRequest = async (slotId: string) => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          alert('로그인이 필요합니다.');
+          router.push('/login');
+          return;
+        }
+        
+    const { error } = await supabase.from('time_request').insert([
+        {
+          slot_id: slotId,
+          requester_id: user.id,
+          message: '함께하고 싶어요!',
+          status: 'pending',
+        },
+      ]);
+
+    if (error) {
+        console.error('❌ 신청 실패:', error.message);
+        alert('신청 실패: ' + error.message);
+      } else {
+        alert('✅ 신청이 완료되었습니다!');
+        // ✅ 상태 업데이트
+        setRequestedSlots((prev) => [...prev, slotId]);
+      }
+    };
 
   if (loading) {
     return (
@@ -57,6 +94,23 @@ export default function SlotListPage() {
     );
   }
 
+  const goToRequestList = () => {
+    router.push('/request'); // ✅ 요청 리스트 페이지로 이동
+  };
+  const goToSlotCreate = () => {
+    router.push('/slot/create'); // ✅ 시간 등록 페이지로 이동
+  };
+  const goToProfile = () => {
+    router.push('/profile'); // ✅ 프로필 페이지로 이동
+  };
+    // 로그아웃 기능
+    const handleLogout = async () => {
+      await supabase.auth.signOut({ scope: 'local' }); // ✅ 로컬 세션까지 전부 삭제
+      localStorage.clear(); // ✅ 혹시 남은 토큰 직접 제거
+      sessionStorage.clear();
+      router.push('/login');
+    };
+  
   return (
     <div className="min-h-screen px-6 py-8 bg-zinc-50">
       <h1 className="text-2xl font-semibold mb-6 text-center">시간 리스트</h1>
@@ -105,11 +159,56 @@ export default function SlotListPage() {
                   {new Date(slot.end_time).toLocaleTimeString()}
                 </p>
                 <p className="text-sm text-gray-500">📍 {slot.location || '장소 미정'}</p>
+              
+                {requestedSlots.includes(slot.id) ? (
+                <button
+                    disabled
+                    className="mt-3 bg-gray-400 text-white px-4 py-2 rounded cursor-not-allowed"
+                >
+                    수락 대기중
+                </button>
+                ) : (
+                <button
+                    onClick={() => handleRequest(slot.id)}
+                    className="mt-3 bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                    신청하기
+                </button>
+                )}  
+              
               </li>
             ))}
           </ul>
         )}
       </section>
+      <div className="flex justify-center">
+      <button
+          onClick={goToRequestList}
+          className="mt-4 bg-green-500 text-white px-4 py-2 rounded"
+        >
+          받은요청 리스트로 이동
+        </button>
+      </div>
+      <div className="flex justify-center">
+      <button
+        onClick={goToSlotCreate}
+        className="mt-4 bg-green-500 text-white px-4 py-2 rounded"
+      >
+        시간등록하기
+      </button>
+      <button
+        onClick={handleLogout}
+        className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
+      >
+        로그아웃
+      </button>
+      <button
+        onClick={goToProfile}
+        className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+      >
+        프로필 바로가기
+      </button>
+      </div>
     </div>
   );
 }

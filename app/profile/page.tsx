@@ -54,6 +54,9 @@ export default function ProfilePage() {
   const goToSlotCreate = () => {
     router.push('/slot/create'); // ✅ 시간 등록 페이지로 이동
   };
+  const goToRequestList = () => {
+    router.push('/request'); // ✅ 요청 리스트 페이지로 이동
+  };
 
   if (!profile) {
     return (
@@ -87,6 +90,14 @@ export default function ProfilePage() {
       </div>
 
       <button
+          onClick={goToRequestList}
+          className="mt-4 bg-green-500 text-white px-4 py-2 rounded"
+        >
+          받은요청 리스트로 이동
+      </button>
+
+      <div className="flex justify-center">
+      <button
         onClick={handleLogout}
         className="mt-4 bg-red-500 text-white px-4 py-2 rounded"
       >
@@ -95,10 +106,11 @@ export default function ProfilePage() {
 
       <button
         onClick={goToSlotCreate}
-        className="mt-4 bg-green-500 text-white px-4 py-2 rounded"
+        className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
       >
         시간등록하기
       </button>
+      </div>
     </div>
   );
 }
