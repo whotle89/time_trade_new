@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+:root {
+  --brand-primary: #FE398E;
+  --brand-secondary: #ffebf4;
+  --cta-primary: #dbdbdb
+  --cta-disabled: #9c9c9c;
+  --cta-text: #ffffff;
+  --cta-text-able: #363636
+  --cta-text-diable: #9c9c9c
+
+}
+
+html, body {
+  background-color: #fff;
+  color: #111;
+}
+
